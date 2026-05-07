@@ -119,8 +119,17 @@ Effect:
 
 ### Supabase
 
-- Status: policy intent documented, credential wiring deferred
-- Target posture: read-only (`mls_auditor`) for autonomous monitoring
+- Status: read/write credentials are wired and verified from VPS runtime
+- Runtime env keys in `/root/.openclaw/.env`:
+  - `SUPABASE_DB_URL_RO` (`mls_auditor`, autonomous read posture)
+  - `SUPABASE_DB_URL_RW` (`mls_operator`, approval-gated change posture)
+- Connection path: Supabase shared/transaction pooler (IPv4-compatible)
+- Target posture:
+  - default: read-only diagnostics and monitoring
+  - temporary change windows: write-capable execution after explicit approval
+- Current caveat:
+  - MDI confirmed `SELECT` works for app-facing `public` tables and operational monitoring queries.
+  - Cross-schema access to Supabase-managed schemas (for example `auth`, `realtime`) may remain restricted depending on project-managed schema permissions.
 
 ### MLS Grid
 
@@ -149,6 +158,9 @@ Unless explicitly overridden, every OpenClaw agent in this workforce should foll
   - immutable/bootstrap files remain human-controlled.
 - Approval contract is required for any state-changing action:
   - target, scope, action, time window, rollback path.
+- Approval UX:
+  - operator can approve in plain English,
+  - agent must restate target/scope/action/window/rollback and receive final confirmation before execution.
 
 Agent-specific differences are intentionally limited to:
 
@@ -167,6 +179,7 @@ Agent-specific differences are intentionally limited to:
 - Agent workspace mapping in `openclaw.json`
 - Slack routing bindings and channel policy
 - Heartbeat cadence by agent
+- Gateway is now installed and running as a persistent systemd user service (`openclaw-gateway.service`)
 
 ### Agent policy enforcement (prompt-injected docs)
 
@@ -305,10 +318,12 @@ git ls-remote https://github.com/Virgally/vsg.git HEAD
 
 ## 10) Outstanding Work
 
-1. Supabase credential wiring (`mls_auditor` read-only) and verification
+1. Decide whether `auth`/`realtime` schema visibility is required for MDI's mission or left intentionally restricted
 2. MLS Grid credential injection (`MLS_GRID_USERNAME`, `MLS_GRID_PASSWORD`)
-3. Optional: scaffold curated bootstrap docs for `main` admin workspace
-4. Optional: standardize a reusable onboarding template for future agents
+3. Optional: enable Supabase PITR add-on for finer-grained rollback windows
+4. Optional: add storage bucket backup/replication strategy (DB backups do not include object payload rollback)
+5. Optional: scaffold curated bootstrap docs for `main` admin workspace
+6. Optional: standardize a reusable onboarding template for future agents
 
 ## 11) Scope and Non-Propagation Clarification
 

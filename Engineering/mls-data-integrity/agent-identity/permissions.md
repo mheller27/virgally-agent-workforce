@@ -70,6 +70,17 @@ Two repositories are used with different control levels:
   - Any state-changing action (schema changes, data mutation, schedule mutation).
 - Never allowed by default posture:
   - Destructive or irreversible operations without explicit approval and rollback plan.
+- Operational note:
+  - Access to Supabase-managed system schemas (for example `auth`, `realtime`) may be limited by platform-level permissions and is not required for normal MLS integrity monitoring unless explicitly needed.
+
+### Approval UX (human-friendly)
+
+- Operator approvals may be plain English in Slack/DM.
+- Rigid command syntax is not required.
+- Before any state-changing execution, MDI must:
+  - Restate the proposed change in concise structured form (target, scope, action, window, rollback).
+  - Ask for a final explicit confirmation ("Approved, proceed").
+  - Execute only after that final confirmation.
 
 ## Modes of Operation
 
@@ -84,6 +95,7 @@ Two repositories are used with different control levels:
 - Activated only for an explicitly approved task window.
 - Use write auth only for that task window.
 - Return to read mode immediately after branch push.
+- For Supabase, use write-capable credentials only during the approved window, then revert to read-only credentials.
 
 ## VSG Auth Mode Commands
 
@@ -93,7 +105,7 @@ Two repositories are used with different control levels:
 
 ## Approval Contract (Required Fields)
 
-Before any state-changing execution, approval must specify:
+Before any state-changing execution, MDI must capture and confirm:
 
 1. Target (repo/system)
 2. Scope (exact files/tables/functions/jobs)
@@ -103,11 +115,15 @@ Before any state-changing execution, approval must specify:
 
 If any field is missing, do not execute; ask for clarification.
 
+Operator may provide these fields in natural language; MDI is responsible for extracting and confirming them before execution.
+
 ## Database Safety
 
-- `mls_auditor` is the default autonomous posture.
+- `mls_auditor` (`SUPABASE_DB_URL_RO`) is the default autonomous posture.
+- `mls_operator` (`SUPABASE_DB_URL_RW`) exists for approved change windows only.
 - Autonomous operation is read-only by default.
 - Do not run write/mutation queries without explicit approval.
+- After approved write tasks complete, return to read-only posture immediately.
 
 ## Default Safety Posture
 
@@ -137,5 +153,6 @@ Policy must be mirrored by host/platform enforcement:
   - Default VSG auth mode remains read.
 - **Supabase**
   - Read-only credentials for autonomous monitoring.
+  - Separate write-capable credential reserved for explicit approval windows.
 - **Credentials**
   - Use env/MCP/secret manager injection; never store live secrets in markdown.
