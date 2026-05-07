@@ -313,6 +313,17 @@ On push/commit failure:
 3. Keep local branch/commits intact.
 4. Ask operator for next action.
 
+### OpenClaw emergency control (operator kill switch)
+
+When an agent appears stuck in a long-running loop or is unresponsive in Slack typing state:
+
+1. Stop gateway immediately (halts active token spend):
+   - `systemctl --user stop openclaw-gateway.service`
+2. Confirm halted:
+   - `systemctl --user status openclaw-gateway.service --no-pager`
+3. Resume when ready:
+   - `systemctl --user start openclaw-gateway.service`
+
 ## 9) Verification Commands
 
 ```bash
@@ -337,12 +348,16 @@ git ls-remote https://github.com/Virgally/vsg.git HEAD
 ## 10) Outstanding Work
 
 1. Decide whether `auth`/`realtime` schema visibility is required for MDI's mission or left intentionally restricted
-2. MLS Grid credential injection (`MLS_GRID_USERNAME`, `MLS_GRID_PASSWORD`)
-3. Optional: enable Supabase PITR add-on for finer-grained rollback windows
-4. Optional: add storage bucket backup/replication strategy (DB backups do not include object payload rollback)
-5. Optional: split Google Cloud into reader/operator service accounts for hard technical read-vs-write gating
-6. Optional: scaffold curated bootstrap docs for `main` admin workspace
-7. Optional: standardize a reusable onboarding template for future agents
+2. Resolve Cloud Build deploy blocker for `mdi-operator` local-source submits:
+   - current observed error: forbidden on `virgally-3ad78_cloudbuild` with `serviceusage.services.use` hint
+   - confirmed missing effective bucket metadata permission in diagnostics: `storage.buckets.get`
+   - next validation target: successful `gcloud builds submit` from `/root/vsg` on MDI branch
+3. MLS Grid credential injection (`MLS_GRID_USERNAME`, `MLS_GRID_PASSWORD`)
+4. Optional: enable Supabase PITR add-on for finer-grained rollback windows
+5. Optional: add storage bucket backup/replication strategy (DB backups do not include object payload rollback)
+6. Optional: split Google Cloud into reader/operator service accounts for hard technical read-vs-write gating
+7. Optional: scaffold curated bootstrap docs for `main` admin workspace
+8. Optional: standardize a reusable onboarding template for future agents
 
 ## 11) Scope and Non-Propagation Clarification
 
