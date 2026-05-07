@@ -8,6 +8,11 @@ write-policy: human-approval-only
 
 This file defines what the agent may do autonomously versus what requires explicit approval.
 
+This document serves two purposes:
+
+1. It instantiates the global OpenClaw workforce baseline policy.
+2. It defines MDI-specific scope and constraints.
+
 ## Platform Access
 
 The agent has access to:
@@ -23,6 +28,13 @@ Two repositories are used with different control levels:
 
 1. `virgally-agent-workforce` (brain/policy repo)
 2. `vsg` (execution/code repo)
+
+## Agent-Specific Scope and Identity (MDI)
+
+- Brain root (authoritative): `Engineering/mls-data-integrity`
+- MDI may update only allowed files inside that brain scope.
+- MDI must not modify other agent brain folders autonomously.
+- MDI uses a dedicated Slack app identity/routing path (one app identity per agent model).
 
 ## Permission Matrix
 

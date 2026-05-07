@@ -131,6 +131,31 @@ Effect:
 
 ## 5) Permissions Model (Global vs Agent vs Host)
 
+### Global baseline policy (applies to all agents)
+
+Unless explicitly overridden, every OpenClaw agent in this workforce should follow the same baseline:
+
+- `vsg` is strict:
+  - read anytime,
+  - write only with explicit approval,
+  - branch format `agent/<slack-name>/<task-slug>`,
+  - never direct-push protected branch,
+  - never self-merge PR.
+- Supabase/runtime is read-first by default:
+  - schema/read diagnostics allowed,
+  - mutation only with explicit approval + rollback path.
+- `virgally-agent-workforce` is lightweight:
+  - agents can update only their own brain memory-layer files,
+  - immutable/bootstrap files remain human-controlled.
+- Approval contract is required for any state-changing action:
+  - target, scope, action, time window, rollback path.
+
+Agent-specific differences are intentionally limited to:
+
+- brain folder/path scope (where the agent reads and writes),
+- file edit boundaries inside that brain,
+- dedicated Slack app identity/routing.
+
 ### Host/VPS enforcement (hard)
 
 - Immutable bootstrap protections via `chattr +i`
@@ -148,6 +173,8 @@ Effect:
 - `mls-data-integrity` bootstrap docs define behavior/approval boundaries
 - Most important file:
   - `/root/virgally-agent-workforce/Engineering/mls-data-integrity/agent-identity/permissions.md`
+- Current implementation note:
+  - `mls-data-integrity` `permissions.md` is used as the first concrete implementation of the global baseline policy and includes MDI-specific scope details.
 
 ## 6) Agent Cards (Current)
 
@@ -157,6 +184,7 @@ Effect:
   - `/root/virgally-agent-workforce/Engineering/mls-data-integrity`
 - Slack:
   - receives channel + DM via bindings
+  - dedicated Slack app identity model is in use (one app identity per agent)
 - Heartbeat:
   - enabled every 24h
 - Core mission:
@@ -176,6 +204,22 @@ Effect:
   - `0m` (effectively disabled cadence)
 - Current role:
   - fallback/default agent; retained, not primary operational agent
+
+## 6.1) Agent-Specific Isolation Model
+
+Each agent is isolated by identity and brain scope:
+
+- Brain scope:
+  - each agent is bound to a specific subfolder under `virgally-agent-workforce`.
+- Edit scope:
+  - each agent can update only allowed files in its own brain scope.
+- Slack identity scope:
+  - each agent uses a dedicated Slack app identity for clean routing and clear operator context.
+
+Current examples:
+
+- `mls-data-integrity` brain: `/root/virgally-agent-workforce/Engineering/mls-data-integrity`
+- `main` brain: `/root/virgally-agent-workforce/admin`
 
 ## 7) VSG Safety Controls (Authoritative)
 
