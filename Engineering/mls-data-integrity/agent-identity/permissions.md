@@ -24,53 +24,78 @@ Two repositories are used with different control levels:
 1. `virgally-agent-workforce` (brain/policy repo)
 2. `vsg` (execution/code repo)
 
-## Allowed Without Explicit Approval
+## Permission Matrix
 
-- Read code/docs in `vsg` and `virgally-agent-workforce`.
-- Run diagnostic/read-only queries.
-- Inspect logs/metrics and runtime status.
-- Produce daily and incident reports in Slack.
-- Propose remediation or optimization options.
+### `vsg` (strict)
 
-## Git Policy: `vsg` (Strict)
+- Allowed without approval:
+  - Read all code/docs.
+  - Analyze, diagnose, and propose changes.
+- Allowed only with explicit approval:
+  - Create branch `agent/<slack-name>/<task-slug>`.
+  - Edit code on that branch.
+  - Commit and push that branch.
+- Never allowed:
+  - Commit/push directly to `conversion-tweaks`.
+  - Merge/complete PRs autonomously.
+  - Modify non-agent branches unless explicitly instructed.
 
-- Protected branch is `conversion-tweaks`.
-- Never commit on `conversion-tweaks`.
-- Never push to `conversion-tweaks`.
-- Never merge/complete pull requests.
-- Code changes are allowed only after explicit user approval.
-- For approved code changes, always create a new branch named:
-  - `agent/<slack-name>/<task-slug>`
-- Commit and push only that new agent branch.
-- Do not modify existing non-agent branches unless explicitly instructed.
-- Use read auth by default, and switch to write auth only during an approved write window.
+### `virgally-agent-workforce` (lightweight)
 
-### VSG Auth Mode Commands
+- Allowed without approval:
+  - Update own memory-layer files.
+  - Commit/push lightweight memory updates.
+- Allowed only with explicit approval:
+  - Any bootstrap/immutable file modification.
+- Never allowed:
+  - Modify other agent brain folders autonomously.
+
+### Supabase and runtime systems
+
+- Allowed without approval:
+  - Read schema metadata and run read-only health/diagnostic queries.
+- Allowed only with explicit approval:
+  - Any state-changing action (schema changes, data mutation, schedule mutation).
+- Never allowed by default posture:
+  - Destructive or irreversible operations without explicit approval and rollback plan.
+
+## Modes of Operation
+
+### Audit Mode (default)
+
+- VSG auth mode remains read.
+- No state-changing actions.
+- Continuous diagnostics/reporting allowed.
+
+### Change Mode (temporary, approved)
+
+- Activated only for an explicitly approved task window.
+- Use write auth only for that task window.
+- Return to read mode immediately after branch push.
+
+## VSG Auth Mode Commands
 
 - Show mode: `/root/.local/bin/vsg-auth-mode show`
 - Read mode (default): `/root/.local/bin/vsg-auth-mode read`
 - Write mode (approved window only): `/root/.local/bin/vsg-auth-mode write`
 
-## Git Policy: `virgally-agent-workforce` (Lightweight)
+## Approval Contract (Required Fields)
 
-- This repo stores agent brains/policies.
-- Update only your own brain folder memory files.
-- Do not modify other agent brain folders.
-- Bootstrap/immutable files remain human-controlled.
-- Memory-layer updates can be committed/pushed with lightweight workflow.
+Before any state-changing execution, approval must specify:
+
+1. Target (repo/system)
+2. Scope (exact files/tables/functions/jobs)
+3. Action (create/update/delete)
+4. Time window (valid-until)
+5. Rollback path
+
+If any field is missing, do not execute; ask for clarification.
 
 ## Database Safety
 
-- You operate under a `mls_auditor` role.
-- You have `SELECT` access only.
-- Do not attempt `UPDATE` or `DELETE` commands.
-
-## Requires Explicit User Approval
-
-- Any code changes in `vsg`.
-- Any production config changes (cron, env vars, service settings).
-- Any destructive or state-mutating data operations.
-- Any infrastructure deployment or rollback action.
+- `mls_auditor` is the default autonomous posture.
+- Autonomous operation is read-only by default.
+- Do not run write/mutation queries without explicit approval.
 
 ## Default Safety Posture
 
@@ -79,31 +104,26 @@ Two repositories are used with different control levels:
 - Escalate unknown/high-risk situations before acting.
 - If execution scope is unclear, ask before changing state.
 
-## Failure Handling (Git Auth / Policy Blocks)
+## Failure Handling (Git/Auth/Policy)
 
 When push/commit fails due to auth or policy constraints:
 
 1. Stop retries.
-2. Report exact failure class (`auth`, `permission`, `protected-branch`, or `policy-hook`).
+2. Report exact failure class (`auth`, `permission`, `protected-branch`, `policy-hook`).
 3. Keep local branch and commits intact.
-4. Ask user for next step (for example, rotate token or approve write window).
+4. Ask user for next step.
 
-## Platform Enforcement Requirements (Operational Checklist)
+## Platform Enforcement Requirements
 
-Layer 2 policy must be mirrored by platform enforcement:
+Policy must be mirrored by host/platform enforcement:
 
 - **GitHub**
-  - Fine-grained PAT scopes must exclude admin/destructive operations.
-  - Server-side branch protections should protect `conversion-tweaks` when supported by plan.
+  - Fine-grained PAT scopes exclude admin/destructive operations.
+  - Branch protections enforce PR flow for `conversion-tweaks`.
 - **VPS local enforcement**
-  - VSG hooks enforce branch naming and protected-branch blocking.
-  - Default VSG auth mode must remain read unless write work is explicitly approved.
+  - VSG hooks enforce protected-branch and branch naming rules.
+  - Default VSG auth mode remains read.
 - **Supabase**
-  - Use `mls_auditor` (read-only) credentials for autonomous monitoring tasks.
-  - Do not use `service_role` for routine agent monitoring.
-- **Google Cloud**
-  - Use least-privilege service account roles (viewer-oriented by default).
-  - Do not grant deploy/mutate permissions for routine monitoring.
+  - Read-only credentials for autonomous monitoring.
 - **Credentials**
-  - Inject secrets via env/MCP/secret manager.
-  - Do not store live credential values in markdown files.
+  - Use env/MCP/secret manager injection; never store live secrets in markdown.
