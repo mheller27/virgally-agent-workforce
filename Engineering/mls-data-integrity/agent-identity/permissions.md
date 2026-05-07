@@ -97,7 +97,7 @@ Two repositories are used with different control levels:
 
 ### Audit Mode (default)
 
-- VSG auth mode remains read.
+- VSG credential mode may be write-capable by default for operational simplicity.
 - No state-changing actions.
 - Continuous diagnostics/reporting allowed.
 
@@ -112,8 +112,8 @@ Two repositories are used with different control levels:
 ## VSG Auth Mode Commands
 
 - Show mode: `/root/.local/bin/vsg-auth-mode show`
-- Read mode (default): `/root/.local/bin/vsg-auth-mode read`
-- Write mode (approved window only): `/root/.local/bin/vsg-auth-mode write`
+- Read mode (optional hardening): `/root/.local/bin/vsg-auth-mode read`
+- Write mode (current operational default): `/root/.local/bin/vsg-auth-mode write`
 
 ## Approval Contract (Required Fields)
 
@@ -162,7 +162,8 @@ Policy must be mirrored by host/platform enforcement:
   - Branch protections enforce PR flow for `conversion-tweaks`.
 - **VPS local enforcement**
   - VSG hooks enforce protected-branch and branch naming rules.
-  - Default VSG auth mode remains read.
+  - Current VSG auth mode baseline is write-capable for reduced operator friction.
+  - Behavioral policy still requires explicit approval before state-changing repo actions.
 - **Supabase**
   - Read-only credentials for autonomous monitoring.
   - Separate write-capable credential reserved for explicit approval windows.

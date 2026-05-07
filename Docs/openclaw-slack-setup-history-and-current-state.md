@@ -114,8 +114,8 @@ Effect:
   - read token (`Contents: Read-only`)
   - write token (`Contents: Read and write`)
 - Auth mode:
-  - default read
-  - write only in explicit approved write windows
+  - default write (practical operations mode)
+  - policy still requires explicit operator approval before state-changing repo actions
 
 ### Supabase
 
@@ -283,15 +283,15 @@ Result:
 
 Default:
 
-- `/root/.local/bin/vsg-auth-mode read`
+- `/root/.local/bin/vsg-auth-mode write`
 
 Before explicitly approved code-write task:
 
-- `/root/.local/bin/vsg-auth-mode write`
+- Approval is still required by policy even though write auth is available by default.
 
 After branch push completes:
 
-- `/root/.local/bin/vsg-auth-mode read`
+- Optional hardening step: `/root/.local/bin/vsg-auth-mode read` (temporarily lower capability when desired)
 
 ### Branch workflow for VSG
 
