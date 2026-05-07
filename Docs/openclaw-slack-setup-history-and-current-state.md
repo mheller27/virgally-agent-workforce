@@ -131,6 +131,21 @@ Effect:
   - MDI confirmed `SELECT` works for app-facing `public` tables and operational monitoring queries.
   - Cross-schema access to Supabase-managed schemas (for example `auth`, `realtime`) may remain restricted depending on project-managed schema permissions.
 
+### Google Cloud (Cloud Run / Scheduler / Logs)
+
+- Status: connected and verified from VPS runtime
+- GCP project: `virgally-3ad78`
+- Primary region: `us-central1`
+- Runtime env key: `GOOGLE_APPLICATION_CREDENTIALS=/root/.secrets/gcp-mdi-operator.json`
+- Service account in use: `mdi-operator@virgally-3ad78.iam.gserviceaccount.com`
+- Verified capabilities from VPS:
+  - List Cloud Run services
+  - List Cloud Run jobs
+  - Read operational logs
+- Current operating model:
+  - broad operational capability exists technically on the service account
+  - policy contract still requires explicit operator approval before state-changing actions
+
 ### MLS Grid
 
 - Status: key names/policy documented, credential wiring deferred
@@ -153,6 +168,9 @@ Unless explicitly overridden, every OpenClaw agent in this workforce should foll
 - Supabase/runtime is read-first by default:
   - schema/read diagnostics allowed,
   - mutation only with explicit approval + rollback path.
+- Google Cloud is approval-gated for mutations:
+  - read/diagnose activity allowed by default,
+  - service/job/scheduler changes require explicit approval + confirmation.
 - `virgally-agent-workforce` is lightweight:
   - agents can update only their own brain memory-layer files,
   - immutable/bootstrap files remain human-controlled.
@@ -322,8 +340,9 @@ git ls-remote https://github.com/Virgally/vsg.git HEAD
 2. MLS Grid credential injection (`MLS_GRID_USERNAME`, `MLS_GRID_PASSWORD`)
 3. Optional: enable Supabase PITR add-on for finer-grained rollback windows
 4. Optional: add storage bucket backup/replication strategy (DB backups do not include object payload rollback)
-5. Optional: scaffold curated bootstrap docs for `main` admin workspace
-6. Optional: standardize a reusable onboarding template for future agents
+5. Optional: split Google Cloud into reader/operator service accounts for hard technical read-vs-write gating
+6. Optional: scaffold curated bootstrap docs for `main` admin workspace
+7. Optional: standardize a reusable onboarding template for future agents
 
 ## 11) Scope and Non-Propagation Clarification
 

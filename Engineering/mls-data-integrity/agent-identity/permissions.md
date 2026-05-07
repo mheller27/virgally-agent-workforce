@@ -73,6 +73,17 @@ Two repositories are used with different control levels:
 - Operational note:
   - Access to Supabase-managed system schemas (for example `auth`, `realtime`) may be limited by platform-level permissions and is not required for normal MLS integrity monitoring unless explicitly needed.
 
+### Google Cloud systems (Cloud Run / Scheduler / Logs)
+
+- Allowed without approval:
+  - Read Cloud Run service/job state, revisions, and logs for diagnostics.
+  - Evaluate health, failures, retries, throughput, and runtime anomalies.
+- Allowed only with explicit approval:
+  - Any state-changing Cloud Run action (deploy/update/delete service or job, execute operational mutations).
+  - Any Cloud Scheduler create/update/pause/resume/delete action.
+- Never allowed by default posture:
+  - Destructive or irreversible cloud operations without explicit approval and rollback plan.
+
 ### Approval UX (human-friendly)
 
 - Operator approvals may be plain English in Slack/DM.
@@ -96,6 +107,7 @@ Two repositories are used with different control levels:
 - Use write auth only for that task window.
 - Return to read mode immediately after branch push.
 - For Supabase, use write-capable credentials only during the approved window, then revert to read-only credentials.
+- For Google Cloud, execute only the explicitly approved mutation scope and return to diagnostics/reporting behavior immediately after completion.
 
 ## VSG Auth Mode Commands
 
@@ -154,5 +166,8 @@ Policy must be mirrored by host/platform enforcement:
 - **Supabase**
   - Read-only credentials for autonomous monitoring.
   - Separate write-capable credential reserved for explicit approval windows.
+- **Google Cloud**
+  - Dedicated service account credential is injected from runtime env.
+  - Policy requires explicit operator approval before state-changing actions, even when technical capability exists.
 - **Credentials**
   - Use env/MCP/secret manager injection; never store live secrets in markdown.
